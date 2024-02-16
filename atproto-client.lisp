@@ -43,20 +43,36 @@
     (cdr (assoc :ACCESS-JWT (loading-config-file (string "did.json")) :test #'equal))))
 
 
+(defun get-refresh-jwk ()
+  (if (probe-file "did.json")
+    (cdr (assoc :REFRESH-JWT (loading-config-file (string "did.json")) :test #'equal))))
+
+
 (defun get-did ()
   (if (probe-file "did.json")
     (cdr (assoc :DID (loading-config-file (string "did.json")) :test #'equal))))
 
 
 ; ------------------------------------------------------------------ Call API commands.
-(defun login ()
+(defun create-session ()
   (write-file-from-string
     (map 'string #'code-char
          (drakma:http-request
-           (settings:get-endpoint (string "login"))
+           (settings:get-endpoint (string "create-session"))
            :method :post
            :content-type "application/json"
            :content (read-file-into-string (settings:get-json (string "identifier")))))
+    (string "did.json")))
+
+
+(defun refresh-session ()
+  (write-file-from-string
+    (map 'string #'code-char
+         (drakma:http-request
+           (settings:get-endpoint (string "refresh-session"))
+           :method :post
+           :accept "application/json"
+           :additional-headers `(("Authorization" . ,(format nil "Bearer ~A" (get-refresh-jwk))))))
     (string "did.json")))
 
 
@@ -68,6 +84,60 @@
            :method :get
            :additional-headers `(("Authorization" . ,(format nil "Bearer ~A" (get-access-jwk))))
            :parameters `(("actor" . ,(get-did)))))))
+
+
+(defun get-actor-feeds ()
+  (format t "~A"
+    (map 'string #'code-char
+         (drakma:http-request
+           (settings:get-endpoint (string "get-actor-feeds"))
+           :method :get
+           :additional-headers `(("Authorization" . ,(format nil "Bearer ~A" (get-access-jwk))))
+           :parameters `(("actor" . ,(get-did))
+                         ;("limit" . 50)
+                         ;("cursor" . "")
+                         )))))
+
+
+(defun get-timeline ()
+  (format t "~A"
+    (map 'string #'code-char
+         (drakma:http-request
+           (settings:get-endpoint (string "get-timeline"))
+           :method :get
+           :additional-headers `(("Authorization" . ,(format nil "Bearer ~A" (get-access-jwk))))
+           ;:parameters `(("algorithm" . "")
+           ;              ("limit" . 100)
+           ;              ("cursor" . "")))))
+           ))))
+
+
+(defun get-follows ()
+  (format t "~A"
+    (map 'string #'code-char
+         (drakma:http-request
+           (settings:get-endpoint (string "get-follows"))
+           :method :get
+           :accept "application/json"
+           :additional-headers `(("Authorization" . ,(format nil "Bearer ~A" (get-access-jwk))))
+           :parameters `(("actor" . ,(get-did))
+                         ;("limit" . 50)
+                         ;("cursor" . "")
+                         )))))
+
+
+(defun get-followers ()
+  (format t "~A"
+    (map 'string #'code-char
+         (drakma:http-request
+           (settings:get-endpoint (string "get-followers"))
+           :method :get
+           :accept "application/json"
+           :additional-headers `(("Authorization" . ,(format nil "Bearer ~A" (get-access-jwk))))
+           :parameters `(("actor" . ,(get-did))
+                         ;("limit" . 50)
+                         ;("cursor" . "")
+                         )))))
 
 
 (defun post ()

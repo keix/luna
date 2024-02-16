@@ -19,8 +19,12 @@ First, define the "identifier" and "password" in identifier.json.
  $ vi json/identifier.json
 ```
 
-- login
+- create-session
 
 ```
- $ sbcl --script atproto-client.lisp
+ $ sbcl --script atproto-client.lisp create-session
 ```
+
+## License
+
+Under the terms of the [MIT License](https://opensource.org/license/MIT/). Copyright (c) 2024 Kei Sawamura (a.k.a keix)
