@@ -2,7 +2,9 @@
 (in-package :settings)
 
 (defvar endpoints
-  '((:login . "https://bsky.social/xrpc/com.atproto.server.createSession")))
+  '((:login         . "https://bsky.social/xrpc/com.atproto.server.createSession")
+    (:get-profile   . "https://bsky.social/xrpc/app.bsky.actor.getProfile")
+    (:create-record . "https://bsky.social/xrpc/com.atproto.repo.createRecord")))
 
 ; --------------------------------------------------------------------------
 
