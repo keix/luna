@@ -4,7 +4,8 @@
 (load "settings.lisp")
 
 (let
-  ((*standard-output* (open "/dev/null" :direction :output :if-exists :append)))
+  ((*standard-output*
+     (open "/dev/null" :direction :output :if-exists :append)))
   (ql:quickload 'drakma)
   (ql:quickload 'cl-json)
   (ql:quickload 'local-time))
@@ -15,14 +16,18 @@
   (cdr (assoc (intern (string-upcase command) :keyword) endpoints)))
 
 
-(defun get-json (file-name) 
-  (format nil "~A.json" file-name))
-
-
 (defun get-local-time ()
   (string
     (local-time:format-timestring
       nil (local-time:now) :format local-time:+iso-8601-format+)))
+
+
+(defun get-authorization-access-jwk ()
+  `(("Authorization" . ,(format nil "Bearer ~A" (get-access-jwk)))))
+
+
+(defun get-authorization-refresh-jwk ()
+  `(("Authorization" . ,(format nil "Bearer ~A" (get-refresh-jwk)))))
 
 
 (defun loading-config-file (file)
@@ -47,18 +52,18 @@
 
 ; ------------------------------------------------------------- Get the value from DID.
 (defun get-access-jwk ()
-  (if (probe-file "did.json")
-    (cdr (assoc :ACCESS-JWT (loading-config-file (string "did.json")) :test #'equal))))
+  (if (probe-file did-json)
+    (cdr (assoc :ACCESS-JWT (loading-config-file did-json) :test #'equal))))
 
 
 (defun get-refresh-jwk ()
-  (if (probe-file "did.json")
-    (cdr (assoc :REFRESH-JWT (loading-config-file (string "did.json")) :test #'equal))))
+  (if (probe-file did-json)
+    (cdr (assoc :REFRESH-JWT (loading-config-file did-json) :test #'equal))))
 
 
 (defun get-did ()
-  (if (probe-file "did.json")
-    (cdr (assoc :DID (loading-config-file (string "did.json")) :test #'equal))))
+  (if (probe-file did-json)
+    (cdr (assoc :DID (loading-config-file did-json) :test #'equal))))
 
 
 ; ------------------------------------------------------------------ Call API commands.
@@ -69,8 +74,7 @@
            (get-endpoint (string "create-session"))
            :method :post
            :content-type "application/json"
-           :content (read-file-into-string (get-json (string "identifier")))))
-    (string "did.json")))
+           :content (read-file-into-string identifier-json))) did-json))
 
 
 (defun refresh-session ()
@@ -80,8 +84,7 @@
            (get-endpoint (string "refresh-session"))
            :method :post
            :accept "application/json"
-           :additional-headers `(("Authorization" . ,(format nil "Bearer ~A" (get-refresh-jwk))))))
-    (string "did.json")))
+           :additional-headers (get-authorization-refresh-jwk))) did-json))
 
 
 (defun get-profile ()
@@ -90,7 +93,7 @@
          (drakma:http-request
            (get-endpoint (string "get-profile"))
            :method :get
-           :additional-headers `(("Authorization" . ,(format nil "Bearer ~A" (get-access-jwk))))
+           :additional-headers (get-authorization-access-jwk)
            :parameters `(("actor" . ,(get-did)))))))
 
 
@@ -100,7 +103,7 @@
          (drakma:http-request
            (get-endpoint (string "get-actor-feeds"))
            :method :get
-           :additional-headers `(("Authorization" . ,(format nil "Bearer ~A" (get-access-jwk))))
+           :additional-headers (get-authorization-access-jwk)
            :parameters `(("actor" . ,(get-did))
                          ;("limit" . 50)
                          ;("cursor" . "")
@@ -113,7 +116,7 @@
          (drakma:http-request
            (get-endpoint (string "get-timeline"))
            :method :get
-           :additional-headers `(("Authorization" . ,(format nil "Bearer ~A" (get-access-jwk))))
+           :additional-headers (get-authorization-access-jwk)
            ;:parameters `(("algorithm" . "")
            ;              ("limit" . 100)
            ;              ("cursor" . "")))))
@@ -127,7 +130,7 @@
            (get-endpoint (string "get-follows"))
            :method :get
            :accept "application/json"
-           :additional-headers `(("Authorization" . ,(format nil "Bearer ~A" (get-access-jwk))))
+           :additional-headers (get-authorization-access-jwk)
            :parameters `(("actor" . ,(get-did))
                          ;("limit" . 50)
                          ;("cursor" . "")
@@ -141,14 +144,14 @@
            (get-endpoint (string "get-followers"))
            :method :get
            :accept "application/json"
-           :additional-headers `(("Authorization" . ,(format nil "Bearer ~A" (get-access-jwk))))
+           :additional-headers (get-authorization-access-jwk)
            :parameters `(("actor" . ,(get-did))
                          ;("limit" . 50)
                          ;("cursor" . "")
                          )))))
 
 
-(defun post ()
+(defun create-record ()
   (format t "~A"
     (map 'string #'code-char
          (drakma:http-request
@@ -156,7 +159,7 @@
            :method :post
            :accept "application/json"
            :content-type "application/json"
-           :additional-headers `(("Authorization" . ,(format nil "Bearer ~A" (get-access-jwk))))
+           :additional-headers (get-authorization-access-jwk)
            :content (cl-json:encode-json-to-string
                       `(("repo" . ,(get-did))
                         ("collection" . "app.bsky.feed.post")
@@ -164,7 +167,7 @@
                         ;("validate" . nil)
                         ;("swapCommit" . "")
                         ("record" . (("$type" . "app.bsky.feed.post")
-                                     ("text"  . "Hello, World!")
+                                     ("text"  . "Glassy Sky")
                                      ("createdAt" . ,(get-local-time))))))))))
 
 
