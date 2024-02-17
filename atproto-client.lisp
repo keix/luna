@@ -10,13 +10,21 @@
   (ql:quickload 'local-time))
 
 
-; ------------------------------------------------------------------- ISO-8601 DateTime.
+; --------------------------------------------------------------------- Basic functions.
+(defun get-endpoint (command)
+  (cdr (assoc (intern (string-upcase command) :keyword) endpoints)))
+
+
+(defun get-json (file-name) 
+  (format nil "~A.json" file-name))
+
+
 (defun get-local-time ()
   (string
-    (local-time:format-timestring nil (local-time:now) :format local-time:+iso-8601-format+)))
+    (local-time:format-timestring
+      nil (local-time:now) :format local-time:+iso-8601-format+)))
 
 
-; ------------------------------------------------------------------------ I/O funtions.
 (defun loading-config-file (file)
   (let ((config (read-file-into-string file)))
         (cl-json:decode-json-from-string config)))
@@ -58,10 +66,10 @@
   (write-file-from-string
     (map 'string #'code-char
          (drakma:http-request
-           (settings:get-endpoint (string "create-session"))
+           (get-endpoint (string "create-session"))
            :method :post
            :content-type "application/json"
-           :content (read-file-into-string (settings:get-json (string "identifier")))))
+           :content (read-file-into-string (get-json (string "identifier")))))
     (string "did.json")))
 
 
@@ -69,7 +77,7 @@
   (write-file-from-string
     (map 'string #'code-char
          (drakma:http-request
-           (settings:get-endpoint (string "refresh-session"))
+           (get-endpoint (string "refresh-session"))
            :method :post
            :accept "application/json"
            :additional-headers `(("Authorization" . ,(format nil "Bearer ~A" (get-refresh-jwk))))))
@@ -80,7 +88,7 @@
   (format t "~A"
     (map 'string #'code-char
          (drakma:http-request
-           (settings:get-endpoint (string "get-profile"))
+           (get-endpoint (string "get-profile"))
            :method :get
            :additional-headers `(("Authorization" . ,(format nil "Bearer ~A" (get-access-jwk))))
            :parameters `(("actor" . ,(get-did)))))))
@@ -90,7 +98,7 @@
   (format t "~A"
     (map 'string #'code-char
          (drakma:http-request
-           (settings:get-endpoint (string "get-actor-feeds"))
+           (get-endpoint (string "get-actor-feeds"))
            :method :get
            :additional-headers `(("Authorization" . ,(format nil "Bearer ~A" (get-access-jwk))))
            :parameters `(("actor" . ,(get-did))
@@ -103,7 +111,7 @@
   (format t "~A"
     (map 'string #'code-char
          (drakma:http-request
-           (settings:get-endpoint (string "get-timeline"))
+           (get-endpoint (string "get-timeline"))
            :method :get
            :additional-headers `(("Authorization" . ,(format nil "Bearer ~A" (get-access-jwk))))
            ;:parameters `(("algorithm" . "")
@@ -116,7 +124,7 @@
   (format t "~A"
     (map 'string #'code-char
          (drakma:http-request
-           (settings:get-endpoint (string "get-follows"))
+           (get-endpoint (string "get-follows"))
            :method :get
            :accept "application/json"
            :additional-headers `(("Authorization" . ,(format nil "Bearer ~A" (get-access-jwk))))
@@ -130,7 +138,7 @@
   (format t "~A"
     (map 'string #'code-char
          (drakma:http-request
-           (settings:get-endpoint (string "get-followers"))
+           (get-endpoint (string "get-followers"))
            :method :get
            :accept "application/json"
            :additional-headers `(("Authorization" . ,(format nil "Bearer ~A" (get-access-jwk))))
@@ -144,7 +152,7 @@
   (format t "~A"
     (map 'string #'code-char
          (drakma:http-request
-           (settings:get-endpoint (string "create-record"))
+           (get-endpoint (string "create-record"))
            :method :post
            :accept "application/json"
            :content-type "application/json"
