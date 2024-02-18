@@ -1,4 +1,5 @@
 ; https://www.docs.bsky.app/
+; --------------------------------------------------------------------------------------
 
 (load "~/quicklisp/setup.lisp")
 (load "settings.lisp")
@@ -20,6 +21,14 @@
   (string
     (local-time:format-timestring
       nil (local-time:now) :format local-time:+iso-8601-format+)))
+
+
+(defun get-help ()
+  (format t "~A" error-message))
+
+
+(defun get-version ()
+  (format t "~A" version))
 
 
 (defun get-authorization-access-jwk ()
@@ -50,6 +59,12 @@
     (format stream "~A" input)))
 
 
+(defun invoke-command-safely (args)
+  (let ((endpoint (get-endpoint (car args))))
+    (if (eq endpoint '()) (get-help)
+      (funcall (intern (string-upcase (car args)))))))
+
+
 ; ------------------------------------------------------------- Get the value from DID.
 (defun get-access-jwk ()
   (if (probe-file did-json)
@@ -73,6 +88,7 @@
          (drakma:http-request
            (get-endpoint (string "create-session"))
            :method :post
+           :accept "application/json"
            :content-type "application/json"
            :content (read-file-into-string identifier-json))) did-json))
 
@@ -93,6 +109,7 @@
          (drakma:http-request
            (get-endpoint (string "get-profile"))
            :method :get
+           :accept "application/json"
            :additional-headers (get-authorization-access-jwk)
            :parameters `(("actor" . ,(get-did)))))))
 
@@ -116,10 +133,12 @@
          (drakma:http-request
            (get-endpoint (string "get-timeline"))
            :method :get
+           :accept "application/json"
            :additional-headers (get-authorization-access-jwk)
            ;:parameters `(("algorithm" . "")
            ;              ("limit" . 100)
            ;              ("cursor" . "")))))
+           :parameters nil
            ))))
 
 
@@ -167,11 +186,10 @@
                         ;("validate" . nil)
                         ;("swapCommit" . "")
                         ("record" . (("$type" . "app.bsky.feed.post")
-                                     ("text"  . "Glassy Sky")
+                                     ("text"  . "I guess tomorrow will be mostly rainy.")
                                      ("createdAt" . ,(get-local-time))))))))))
 
 
-(let ((arg (second *posix-argv*)))
-  (when arg
-    (let ((command (intern (string-upcase arg))))
-      (funcall command))))
+(if (eq (cdr *posix-argv*) '()) (get-help)
+  (funcall #'invoke-command-safely (cdr *posix-argv*)))
+
