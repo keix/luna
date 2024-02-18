@@ -1,6 +1,6 @@
-## AT Protocol client for Bluesky
+## Bluesky client written Common Lisp
 
-This is [AT Protocol](https://atproto.com/) client for [Bluesky](https://bsky.app/) written in Common Lisp and it returns JSON always.
+This is [Bluesky](https://bsky.app/) client written in Common Lisp and it returns JSON always.
 
 ## Get started
 
@@ -26,7 +26,7 @@ Once your `identifier.json` is properly set up, you can initiate a session by ex
 This command will store the response into the `json/did.json` file.
 
 ```
- $ sbcl --script atproto-client.lisp create-session
+ $ sbcl --script bluesky-client.lisp create-session
 ```
 
 For more information on AT Protocol's identity, visit: [AT Protocol's Identity Guide.](https://atproto.com/guides/identity)
