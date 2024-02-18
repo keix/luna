@@ -8,7 +8,7 @@ This is [AT Protocol](https://atproto.com/) client for [Bluesky](https://bsky.ap
 - This program is tested with [SBCL](https://www.sbcl.org/) (v2.2.5) on macOS Version 12.2.1
 
 ```
- $ git clone git@github.com:keix/bluesky.git
+ $ git clone git@github.com:keix/luna.git
 ```
 
 ## Usage
