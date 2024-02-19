@@ -1,6 +1,7 @@
+; --------------------------------------------------------------------------------------
+; This is the wapper of Bluesky API.
 ; https://www.docs.bsky.app/
 ; --------------------------------------------------------------------------------------
-
 (load "~/quicklisp/setup.lisp")
 (load "settings.lisp")
 
@@ -86,7 +87,7 @@
   (write-file-from-string
     (map 'string #'code-char
          (drakma:http-request
-           (get-endpoint (string "create-session"))
+           endpoint
            :method :post
            :accept "application/json"
            :content-type "application/json"
@@ -97,7 +98,7 @@
   (write-file-from-string
     (map 'string #'code-char
          (drakma:http-request
-           (get-endpoint (string "refresh-session"))
+           endpoint
            :method :post
            :accept "application/json"
            :additional-headers (get-authorization-refresh-jwk))) did-json))
@@ -107,7 +108,7 @@
   (format t "~A"
     (map 'string #'code-char
          (drakma:http-request
-           (get-endpoint (string "get-profile"))
+           endpoint
            :method :get
            :accept "application/json"
            :additional-headers (get-authorization-access-jwk)
@@ -118,7 +119,7 @@
   (format t "~A"
     (map 'string #'code-char
          (drakma:http-request
-           (get-endpoint (string "get-actor-feeds"))
+           endpoint
            :method :get
            :additional-headers (get-authorization-access-jwk)
            :parameters `(("actor" . ,(get-did))
@@ -131,7 +132,7 @@
   (format t "~A"
     (map 'string #'code-char
          (drakma:http-request
-           (get-endpoint (string "get-timeline"))
+           endpoint
            :method :get
            :accept "application/json"
            :additional-headers (get-authorization-access-jwk)
@@ -146,7 +147,7 @@
   (format t "~A"
     (map 'string #'code-char
          (drakma:http-request
-           (get-endpoint (string "get-follows"))
+           endpoint
            :method :get
            :accept "application/json"
            :additional-headers (get-authorization-access-jwk)
@@ -160,7 +161,7 @@
   (format t "~A"
     (map 'string #'code-char
          (drakma:http-request
-           (get-endpoint (string "get-followers"))
+           endpoint
            :method :get
            :accept "application/json"
            :additional-headers (get-authorization-access-jwk)
@@ -174,7 +175,7 @@
   (format t "~A"
     (map 'string #'code-char
          (drakma:http-request
-           (get-endpoint (string "create-record"))
+           endpoint
            :method :post
            :accept "application/json"
            :content-type "application/json"
