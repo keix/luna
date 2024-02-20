@@ -12,5 +12,5 @@
     (:get-follows     . "https://bsky.social/xrpc/app.bsky.graph.getFollows")
     (:get-followers   . "https://bsky.social/xrpc/app.bsky.graph.getFollowers")))
 
-(defvar did-json (string "json/did.json"))
-(defvar identifier-json (string "json/identifier.json"))
+(defvar did-json (string "atproto/client/did.json"))
+(defvar identifier-json (string "atproto/client/identifier.json"))
