@@ -1,6 +1,7 @@
 (defvar version (string "{\"version\": \"v0.0.05\"}"))
 (defvar error-message (string "{\"error\": \"example\"}"))
 
+(defvar endpoint nil)
 (defvar endpoints
   '((:create-session  . "https://bsky.social/xrpc/com.atproto.server.createSession")
     (:refresh-session . "https://bsky.social/xrpc/com.atproto.server.refreshSession")
