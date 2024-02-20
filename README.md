@@ -1,4 +1,4 @@
-## Bluesky client written Common Lisp
+## Bluesky client written in Common Lisp
 
 This is [Bluesky](https://bsky.app/) client written in Common Lisp and it returns JSON always.
 
@@ -15,11 +15,11 @@ This is [Bluesky](https://bsky.app/) client written in Common Lisp and it return
 
 ### Create active session
 
-To get started, you need to define your "identifier" (such as handle or DID) and "password" within `identifier.json` located in `json` directory.
+To get started, you need to define your "identifier" (such as handle or DID) and "password" within `identifier.json` located in `atproto/client` directory.
 Open the `identifier.json` with your preferred text editor. The following example uses VIM.
 
 ```
- $ vi json/identifier.json
+ $ vi atproto/client/identifier.json
 ```
 
 Once your `identifier.json` is properly set up, you can initiate a session by executing the following command.
