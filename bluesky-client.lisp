@@ -1,4 +1,3 @@
-; --------------------------------------------------------------------------------------
 ; This is the wapper of Bluesky API.
 ; https://www.docs.bsky.app/
 ; --------------------------------------------------------------------------------------
@@ -15,7 +14,8 @@
 
 ; --------------------------------------------------------------------- Basic functions.
 (defun get-endpoint (command)
-  (cdr (assoc (intern (string-upcase command) :keyword) endpoints)))
+  (format nil "~A/xrpc/~A" service
+          (cdr (assoc (intern (string-upcase command) :keyword) endpoints))))
 
 
 (defun get-local-time ()
@@ -30,6 +30,11 @@
 
 (defun get-version ()
   (format t "~A" version))
+
+
+(defun get-lexicon (lexicon)
+  (loading-config-file
+    (format nil "atproto/lexicons/~A.json" (substitute #\/ #\. lexicon))))
 
 
 (defun get-authorization-access-jwk ()
@@ -60,10 +65,14 @@
     (format stream "~A" input)))
 
 
+(defun set-options (args) (format nil "~A" (car args)))
+
+
 (defun invoke-command-safely (args)
   (let ((endpoint (get-endpoint (car args))))
     (if (eq endpoint '()) (get-help)
-      (funcall (intern (string-upcase (car args)))))))
+      (let ((options (set-options (cdr args))))
+        (funcall (intern (string-upcase (car args))))))))
 
 
 ; ------------------------------------------------------------- Get the value from DID.
@@ -193,4 +202,3 @@
 
 (if (eq (cdr *posix-argv*) '()) (get-help)
   (funcall #'invoke-command-safely (cdr *posix-argv*)))
-
