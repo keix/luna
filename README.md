@@ -23,7 +23,7 @@ Open the `identifier.json` with your preferred text editor. The following exampl
 ```
 
 Once your `identifier.json` is properly set up, you can initiate a session by executing the following command.
-This command will store the response into the `json/did.json` file.
+This command will store the response into the `atproto/client/did.json` file.
 
 ```
  $ sbcl --script bluesky-client.lisp create-session
