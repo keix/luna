@@ -1,5 +1,5 @@
 ; This is the wapper of Bluesky API.
-; https://www.docs.bsky.app/
+; https://docs.bsky.app/
 ; --------------------------------------------------------------------------------------
 (load "~/quicklisp/setup.lisp")
 (load "settings.lisp")
