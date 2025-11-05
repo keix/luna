@@ -1,4 +1,4 @@
-## Bluesky client written in Common Lisp
+# Bluesky client written in Common Lisp
 
 This is [Bluesky](https://bsky.app/) client written in Common Lisp and it returns JSON always.
 
@@ -8,7 +8,7 @@ This is [Bluesky](https://bsky.app/) client written in Common Lisp and it return
 - This program is tested with [SBCL](https://www.sbcl.org/) (v2.2.5) on macOS Version 12.2.1
 
 ```
- $ git clone git@github.com:keix/luna.git
+git clone git@github.com:keix/luna.git
 ```
 
 ## Usage
@@ -16,17 +16,17 @@ This is [Bluesky](https://bsky.app/) client written in Common Lisp and it return
 ### Create active session
 
 To get started, you need to define your "identifier" (such as handle or DID) and "password" within `identifier.json` located in `atproto/client` directory.
-Open the `identifier.json` with your preferred text editor. The following example uses VIM.
+Open the `identifier.json` with your preferred text editor. The following example uses Vim.
 
 ```
- $ vi atproto/client/identifier.json
+vi atproto/client/identifier.json
 ```
 
 Once your `identifier.json` is properly set up, you can initiate a session by executing the following command.
 This command will store the response into the `atproto/client/did.json` file.
 
 ```
- $ sbcl --script bluesky-client.lisp create-session
+sbcl --script bluesky-client.lisp create-session
 ```
 
 For more information on AT Protocol's identity, visit: [AT Protocol's Identity Guide.](https://atproto.com/guides/identity)

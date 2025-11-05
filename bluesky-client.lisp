@@ -92,112 +92,131 @@
 
 
 ; ------------------------------------------------------------------ Call API commands.
+; Pure functions for building requests
+(defun build-session-request (identifier-content)
+  `(:endpoint ,endpoint
+    :method :post
+    :accept "application/json"
+    :content-type "application/json"
+    :content ,identifier-content))
+
+(defun build-refresh-request (refresh-headers)
+  `(:endpoint ,endpoint
+    :method :post
+    :accept "application/json"
+    :additional-headers ,refresh-headers))
+
+(defun build-get-request (endpoint-url headers &optional parameters)
+  `(:endpoint ,endpoint-url
+    :method :get
+    :accept "application/json"
+    :additional-headers ,headers
+    :parameters ,parameters))
+
+(defun build-post-request (endpoint-url headers content)
+  `(:endpoint ,endpoint-url
+    :method :post
+    :accept "application/json"
+    :content-type "application/json"
+    :additional-headers ,headers
+    :content ,content))
+
+; Pure functions for processing responses
+(defun process-response (response)
+  (map 'string #'code-char response))
+
+; Function to execute HTTP request (side effect isolated here)
+(defun execute-request (request-spec)
+  (let ((endpoint (getf request-spec :endpoint))
+        (args (loop for (key value) on request-spec by #'cddr
+                    unless (eq key :endpoint)
+                    collect key and collect value)))
+    (apply #'drakma:http-request endpoint args)))
 (defun create-session ()
-  (write-file-from-string
-    (map 'string #'code-char
-         (drakma:http-request
-           endpoint
-           :method :post
-           :accept "application/json"
-           :content-type "application/json"
-           :content (read-file-into-string identifier-json))) did-json))
+  (let* ((identifier-content (read-file-into-string identifier-json))
+         (request-spec (build-session-request identifier-content))
+         (response (execute-request request-spec))
+         (processed-response (process-response response)))
+    (write-file-from-string processed-response did-json)))
 
 
 (defun refresh-session ()
-  (write-file-from-string
-    (map 'string #'code-char
-         (drakma:http-request
-           endpoint
-           :method :post
-           :accept "application/json"
-           :additional-headers (get-authorization-refresh-jwk))) did-json))
+  (let* ((refresh-headers (get-authorization-refresh-jwk))
+         (request-spec (build-refresh-request refresh-headers))
+         (response (execute-request request-spec))
+         (processed-response (process-response response)))
+    (write-file-from-string processed-response did-json)))
 
 
 (defun get-profile ()
-  (format t "~A"
-    (map 'string #'code-char
-         (drakma:http-request
-           endpoint
-           :method :get
-           :accept "application/json"
-           :additional-headers (get-authorization-access-jwk)
-           :parameters `(("actor" . ,(get-did)))))))
+  (let* ((headers (get-authorization-access-jwk))
+         (parameters `(("actor" . ,(get-did))))
+         (request-spec (build-get-request endpoint headers parameters))
+         (response (execute-request request-spec))
+         (processed-response (process-response response)))
+    (format t "~A" processed-response)))
 
 
 (defun get-actor-feeds ()
-  (format t "~A"
-    (map 'string #'code-char
-         (drakma:http-request
-           endpoint
-           :method :get
-           :additional-headers (get-authorization-access-jwk)
-           :parameters `(("actor" . ,(get-did))
-                         ;("limit" . 50)
-                         ;("cursor" . "")
-                         )))))
+  (let* ((headers (get-authorization-access-jwk))
+         (parameters `(("actor" . ,(get-did))
+                       ;("limit" . 50)
+                       ;("cursor" . "")
+                       ))
+         (request-spec (build-get-request endpoint headers parameters))
+         (response (execute-request request-spec))
+         (processed-response (process-response response)))
+    (format t "~A" processed-response)))
 
 
 (defun get-timeline ()
-  (format t "~A"
-    (map 'string #'code-char
-         (drakma:http-request
-           endpoint
-           :method :get
-           :accept "application/json"
-           :additional-headers (get-authorization-access-jwk)
-           ;:parameters `(("algorithm" . "")
-           ;              ("limit" . 100)
-           ;              ("cursor" . "")))))
-           :parameters nil
-           ))))
+  (let* ((headers (get-authorization-access-jwk))
+         (parameters nil)
+         (request-spec (build-get-request endpoint headers parameters))
+         (response (execute-request request-spec))
+         (processed-response (process-response response)))
+    (format t "~A" processed-response)))
 
 
 (defun get-follows ()
-  (format t "~A"
-    (map 'string #'code-char
-         (drakma:http-request
-           endpoint
-           :method :get
-           :accept "application/json"
-           :additional-headers (get-authorization-access-jwk)
-           :parameters `(("actor" . ,(get-did))
-                         ;("limit" . 50)
-                         ;("cursor" . "")
-                         )))))
+  (let* ((headers (get-authorization-access-jwk))
+         (parameters `(("actor" . ,(get-did))
+                       ;("limit" . 50)
+                       ;("cursor" . "")
+                       ))
+         (request-spec (build-get-request endpoint headers parameters))
+         (response (execute-request request-spec))
+         (processed-response (process-response response)))
+    (format t "~A" processed-response)))
 
 
 (defun get-followers ()
-  (format t "~A"
-    (map 'string #'code-char
-         (drakma:http-request
-           endpoint
-           :method :get
-           :accept "application/json"
-           :additional-headers (get-authorization-access-jwk)
-           :parameters `(("actor" . ,(get-did))
-                         ;("limit" . 50)
-                         ;("cursor" . "")
-                         )))))
+  (let* ((headers (get-authorization-access-jwk))
+         (parameters `(("actor" . ,(get-did))
+                       ;("limit" . 50)
+                       ;("cursor" . "")
+                       ))
+         (request-spec (build-get-request endpoint headers parameters))
+         (response (execute-request request-spec))
+         (processed-response (process-response response)))
+    (format t "~A" processed-response)))
 
 
 (defun create-record ()
-  (format t "~A"
-    (map 'string #'code-char
-         (drakma:http-request
-           endpoint
-           :method :post
-           :accept "application/json"
-           :content-type "application/json"
-           :additional-headers (get-authorization-access-jwk)
-           :content (cl-json:encode-json-to-string
-                      `(("repo" . ,(get-did))
-                        ("collection" . "app.bsky.feed.post")
-                        ;("rkey" . "")
-                        ;("validate" . nil)
-                        ;("swapCommit" . "")
-                        ("record" . (("$type" . "app.bsky.feed.post")
-                                     ("text"  . "I guess tomorrow will be mostly rainy.")
-                                     ("createdAt" . ,(get-local-time))))))))))
+  (let* ((headers (get-authorization-access-jwk))
+         (content (cl-json:encode-json-to-string
+                    `(("repo" . ,(get-did))
+                      ("collection" . "app.bsky.feed.post")
+                      ;("rkey" . "")
+                      ;("validate" . nil)
+                      ;("swapCommit" . "")
+                      ("record" . (("$type" . "app.bsky.feed.post")
+                                   ("text"  . "I guess tomorrow will be mostly rainy.")
+                                   ("createdAt" . ,(get-local-time)))))))
+         (request-spec (build-post-request endpoint headers content))
+         (response (execute-request request-spec))
+         (processed-response (process-response response)))
+    (format t "~A" processed-response)))
 
 
 (if (eq (cdr *posix-argv*) '()) (get-help)
