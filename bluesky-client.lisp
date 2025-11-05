@@ -84,9 +84,7 @@
          (endpoint-url (get-endpoint command)))
     (if (null endpoint-url)
         (get-help)
-        (progn
-          (setf endpoint endpoint-url)
-          (funcall (intern (string-upcase command)))))))
+        (funcall (intern (string-upcase command)) endpoint-url))))
 
 
 ; ------------------------------------------------------------- Get the value from DID.
@@ -156,49 +154,49 @@
                     unless (eq key :endpoint)
                     collect key and collect value)))
     (apply #'drakma:http-request endpoint args)))
-(defun create-session ()
+(defun create-session (endpoint-url)
   (let* ((identifier-content (read-file-into-string identifier-json))
-         (request-spec (build-session-request endpoint identifier-content))
+         (request-spec (build-session-request endpoint-url identifier-content))
          (response (execute-request request-spec))
          (processed-response (process-response response)))
     (write-file-from-string processed-response did-json)))
 
 
-(defun refresh-session ()
+(defun refresh-session (endpoint-url)
   (let* ((refresh-headers (get-authorization-refresh-jwk))
-         (request-spec (build-refresh-request endpoint refresh-headers))
+         (request-spec (build-refresh-request endpoint-url refresh-headers))
          (response (execute-request request-spec))
          (processed-response (process-response response)))
     (write-file-from-string processed-response did-json)))
 
 
-(defun get-profile ()
-  (call-get-api endpoint :actor-param t))
+(defun get-profile (endpoint-url)
+  (call-get-api endpoint-url :actor-param t))
 
 
-(defun get-actor-feeds ()
-  (call-get-api endpoint :actor-param t
+(defun get-actor-feeds (endpoint-url)
+  (call-get-api endpoint-url :actor-param t
                 ;:other-params '(("limit" . 50) ("cursor" . ""))
                 ))
 
 
-(defun get-timeline ()
-  (call-get-api endpoint))
+(defun get-timeline (endpoint-url)
+  (call-get-api endpoint-url))
 
 
-(defun get-follows ()
-  (call-get-api endpoint :actor-param t
+(defun get-follows (endpoint-url)
+  (call-get-api endpoint-url :actor-param t
                 ;:other-params '(("limit" . 50) ("cursor" . ""))
                 ))
 
 
-(defun get-followers ()
-  (call-get-api endpoint :actor-param t
+(defun get-followers (endpoint-url)
+  (call-get-api endpoint-url :actor-param t
                 ;:other-params '(("limit" . 50) ("cursor" . ""))
                 ))
 
 
-(defun create-record ()
+(defun create-record (endpoint-url)
   (let* ((headers (get-authorization-access-jwk))
          (content (cl-json:encode-json-to-string
                     `(("repo" . ,(get-did))
@@ -209,7 +207,7 @@
                       ("record" . (("$type" . "app.bsky.feed.post")
                                    ("text"  . "I guess tomorrow will be mostly rainy.")
                                    ("createdAt" . ,(get-local-time)))))))
-         (request-spec (build-post-request endpoint headers content))
+         (request-spec (build-post-request endpoint-url headers content))
          (response (execute-request request-spec))
          (processed-response (process-response response)))
     (format t "~A" processed-response)))
