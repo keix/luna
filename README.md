@@ -5,7 +5,7 @@ This is [Bluesky](https://bsky.app/) client written in Common Lisp and it return
 ## Get started
 
 - This program depends on Quicklisp
-- This program is tested with [SBCL](https://www.sbcl.org/) (v2.2.5) on macOS Version 12.2.1
+- This program is tested with [SBCL](https://www.sbcl.org/) (v2.5.4) on Gentoo Linux 6.12.21
 
 ```
 git clone git@github.com:keix/luna.git
