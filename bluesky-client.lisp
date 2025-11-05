@@ -81,10 +81,11 @@
 
 (defun invoke-command-safely (args)
   (let* ((command (car args))
-         (endpoint-url (get-endpoint command)))
+         (endpoint-url (get-endpoint command))
+         (options (cdr args)))
     (if (null endpoint-url)
         (get-help)
-        (funcall (intern (string-upcase command)) endpoint-url))))
+        (apply (intern (string-upcase command)) endpoint-url options))))
 
 
 ; ------------------------------------------------------------- Get the value from DID.
@@ -93,11 +94,14 @@
   (when (probe-file did-json)
     (cdr (assoc key (loading-config-file did-json) :test #'equal))))
 
+
 (defun get-access-jwk ()
   (get-did-value :ACCESS-JWT))
 
+
 (defun get-refresh-jwk ()
   (get-did-value :REFRESH-JWT))
+
 
 (defun get-did ()
   (get-did-value :DID))
@@ -114,6 +118,7 @@
          (processed-response (process-response response)))
     (format t "~A" processed-response)))
 
+
 ; Pure functions for building requests
 (defun build-session-request (endpoint-url identifier-content)
   `(:endpoint ,endpoint-url
@@ -128,12 +133,14 @@
     :accept "application/json"
     :additional-headers ,refresh-headers))
 
+
 (defun build-get-request (endpoint-url headers &optional parameters)
   `(:endpoint ,endpoint-url
     :method :get
     :accept "application/json"
     :additional-headers ,headers
     :parameters ,parameters))
+
 
 (defun build-post-request (endpoint-url headers content)
   `(:endpoint ,endpoint-url
@@ -143,9 +150,11 @@
     :additional-headers ,headers
     :content ,content))
 
+
 ; Pure functions for processing responses
 (defun process-response (response)
   (map 'string #'code-char response))
+
 
 ; Function to execute HTTP request (side effect isolated here)
 (defun execute-request (request-spec)
@@ -154,7 +163,8 @@
                     unless (eq key :endpoint)
                     collect key and collect value)))
     (apply #'drakma:http-request endpoint args)))
-(defun create-session (endpoint-url)
+(defun create-session (endpoint-url &rest args)
+  (declare (ignore args))
   (let* ((identifier-content (read-file-into-string identifier-json))
          (request-spec (build-session-request endpoint-url identifier-content))
          (response (execute-request request-spec))
@@ -162,7 +172,8 @@
     (write-file-from-string processed-response did-json)))
 
 
-(defun refresh-session (endpoint-url)
+(defun refresh-session (endpoint-url &rest args)
+  (declare (ignore args))
   (let* ((refresh-headers (get-authorization-refresh-jwk))
          (request-spec (build-refresh-request endpoint-url refresh-headers))
          (response (execute-request request-spec))
@@ -170,34 +181,40 @@
     (write-file-from-string processed-response did-json)))
 
 
-(defun get-profile (endpoint-url)
+(defun get-profile (endpoint-url &rest args)
+  (declare (ignore args))
   (call-get-api endpoint-url :actor-param t))
 
 
-(defun get-actor-feeds (endpoint-url)
+(defun get-actor-feeds (endpoint-url &rest args)
+  (declare (ignore args))
   (call-get-api endpoint-url :actor-param t
                 ;:other-params '(("limit" . 50) ("cursor" . ""))
                 ))
 
 
-(defun get-timeline (endpoint-url)
+(defun get-timeline (endpoint-url &rest args)
+  (declare (ignore args))
   (call-get-api endpoint-url))
 
 
-(defun get-follows (endpoint-url)
+(defun get-follows (endpoint-url &rest args)
+  (declare (ignore args))
   (call-get-api endpoint-url :actor-param t
                 ;:other-params '(("limit" . 50) ("cursor" . ""))
                 ))
 
 
-(defun get-followers (endpoint-url)
+(defun get-followers (endpoint-url &rest args)
+  (declare (ignore args))
   (call-get-api endpoint-url :actor-param t
                 ;:other-params '(("limit" . 50) ("cursor" . ""))
                 ))
 
 
-(defun create-record (endpoint-url)
-  (let* ((headers (get-authorization-access-jwk))
+(defun create-record (endpoint-url &rest args)
+  (let* ((text (or (first args) "Hello from Bluesky!"))
+         (headers (get-authorization-access-jwk))
          (content (cl-json:encode-json-to-string
                     `(("repo" . ,(get-did))
                       ("collection" . "app.bsky.feed.post")
@@ -205,7 +222,7 @@
                       ;("validate" . nil)
                       ;("swapCommit" . "")
                       ("record" . (("$type" . "app.bsky.feed.post")
-                                   ("text"  . "I guess tomorrow will be mostly rainy.")
+                                   ("text"  . ,text)
                                    ("createdAt" . ,(get-local-time)))))))
          (request-spec (build-post-request endpoint-url headers content))
          (response (execute-request request-spec))
