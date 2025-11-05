@@ -14,8 +14,9 @@
 
 ; --------------------------------------------------------------------- Basic functions.
 (defun get-endpoint (command)
-  (format nil "~A/xrpc/~A" service
-          (cdr (assoc (intern (string-upcase command) :keyword) endpoints))))
+  (let ((api-path (cdr (assoc (intern (string-upcase command) :keyword) endpoints))))
+    (when api-path
+      (format nil "~A/xrpc/~A" service api-path))))
 
 
 (defun get-local-time ()
@@ -47,13 +48,22 @@
 
 (defun loading-config-file (file)
   (let ((config (read-file-into-string file)))
-        (cl-json:decode-json-from-string config)))
+    (when config
+      (handler-case
+        (cl-json:decode-json-from-string config)
+        (error (e)
+          (format *error-output* "Error parsing JSON from ~A: ~A~%" file e)
+          nil)))))
 
 
 (defun read-file-into-string (file)
-  (with-open-file (stream file)
-    (let ((contents (make-string (file-length stream))))
-      (read-sequence contents stream) contents)))
+  (handler-case
+    (with-open-file (stream file)
+      (let ((contents (make-string (file-length stream))))
+        (read-sequence contents stream) contents))
+    (error (e)
+      (format *error-output* "Error reading file ~A: ~A~%" file e)
+      nil)))
 
 
 (defun write-file-from-string (input output)
@@ -65,43 +75,57 @@
     (format stream "~A" input)))
 
 
-(defun set-options (args) (format nil "~A" (car args)))
+(defun set-options (args) 
+  (format nil "~A" (car args)))
 
 
 (defun invoke-command-safely (args)
-  (let ((endpoint (get-endpoint (car args))))
-    (if (eq endpoint '()) (get-help)
-      (let ((options (set-options (cdr args))))
-        (funcall (intern (string-upcase (car args))))))))
+  (let* ((command (car args))
+         (endpoint-url (get-endpoint command)))
+    (if (null endpoint-url)
+        (get-help)
+        (progn
+          (setf endpoint endpoint-url)
+          (funcall (intern (string-upcase command)))))))
 
 
 ; ------------------------------------------------------------- Get the value from DID.
-(defun get-access-jwk ()
-  (if (probe-file did-json)
-    (cdr (assoc :ACCESS-JWT (loading-config-file did-json) :test #'equal))))
+; Generic function for getting values from DID JSON
+(defun get-did-value (key)
+  (when (probe-file did-json)
+    (cdr (assoc key (loading-config-file did-json) :test #'equal))))
 
+(defun get-access-jwk ()
+  (get-did-value :ACCESS-JWT))
 
 (defun get-refresh-jwk ()
-  (if (probe-file did-json)
-    (cdr (assoc :REFRESH-JWT (loading-config-file did-json) :test #'equal))))
-
+  (get-did-value :REFRESH-JWT))
 
 (defun get-did ()
-  (if (probe-file did-json)
-    (cdr (assoc :DID (loading-config-file did-json) :test #'equal))))
-
+  (get-did-value :DID))
 
 ; ------------------------------------------------------------------ Call API commands.
+; Generic function for GET API calls
+(defun call-get-api (endpoint-url &key actor-param other-params)
+  (let* ((headers (get-authorization-access-jwk))
+         (parameters (append
+                       (when actor-param `(("actor" . ,(get-did))))
+                       other-params))
+         (request-spec (build-get-request endpoint-url headers parameters))
+         (response (execute-request request-spec))
+         (processed-response (process-response response)))
+    (format t "~A" processed-response)))
+
 ; Pure functions for building requests
-(defun build-session-request (identifier-content)
-  `(:endpoint ,endpoint
+(defun build-session-request (endpoint-url identifier-content)
+  `(:endpoint ,endpoint-url
     :method :post
     :accept "application/json"
     :content-type "application/json"
     :content ,identifier-content))
 
-(defun build-refresh-request (refresh-headers)
-  `(:endpoint ,endpoint
+(defun build-refresh-request (endpoint-url refresh-headers)
+  `(:endpoint ,endpoint-url
     :method :post
     :accept "application/json"
     :additional-headers ,refresh-headers))
@@ -134,7 +158,7 @@
     (apply #'drakma:http-request endpoint args)))
 (defun create-session ()
   (let* ((identifier-content (read-file-into-string identifier-json))
-         (request-spec (build-session-request identifier-content))
+         (request-spec (build-session-request endpoint identifier-content))
          (response (execute-request request-spec))
          (processed-response (process-response response)))
     (write-file-from-string processed-response did-json)))
@@ -142,64 +166,36 @@
 
 (defun refresh-session ()
   (let* ((refresh-headers (get-authorization-refresh-jwk))
-         (request-spec (build-refresh-request refresh-headers))
+         (request-spec (build-refresh-request endpoint refresh-headers))
          (response (execute-request request-spec))
          (processed-response (process-response response)))
     (write-file-from-string processed-response did-json)))
 
 
 (defun get-profile ()
-  (let* ((headers (get-authorization-access-jwk))
-         (parameters `(("actor" . ,(get-did))))
-         (request-spec (build-get-request endpoint headers parameters))
-         (response (execute-request request-spec))
-         (processed-response (process-response response)))
-    (format t "~A" processed-response)))
+  (call-get-api endpoint :actor-param t))
 
 
 (defun get-actor-feeds ()
-  (let* ((headers (get-authorization-access-jwk))
-         (parameters `(("actor" . ,(get-did))
-                       ;("limit" . 50)
-                       ;("cursor" . "")
-                       ))
-         (request-spec (build-get-request endpoint headers parameters))
-         (response (execute-request request-spec))
-         (processed-response (process-response response)))
-    (format t "~A" processed-response)))
+  (call-get-api endpoint :actor-param t
+                ;:other-params '(("limit" . 50) ("cursor" . ""))
+                ))
 
 
 (defun get-timeline ()
-  (let* ((headers (get-authorization-access-jwk))
-         (parameters nil)
-         (request-spec (build-get-request endpoint headers parameters))
-         (response (execute-request request-spec))
-         (processed-response (process-response response)))
-    (format t "~A" processed-response)))
+  (call-get-api endpoint))
 
 
 (defun get-follows ()
-  (let* ((headers (get-authorization-access-jwk))
-         (parameters `(("actor" . ,(get-did))
-                       ;("limit" . 50)
-                       ;("cursor" . "")
-                       ))
-         (request-spec (build-get-request endpoint headers parameters))
-         (response (execute-request request-spec))
-         (processed-response (process-response response)))
-    (format t "~A" processed-response)))
+  (call-get-api endpoint :actor-param t
+                ;:other-params '(("limit" . 50) ("cursor" . ""))
+                ))
 
 
 (defun get-followers ()
-  (let* ((headers (get-authorization-access-jwk))
-         (parameters `(("actor" . ,(get-did))
-                       ;("limit" . 50)
-                       ;("cursor" . "")
-                       ))
-         (request-spec (build-get-request endpoint headers parameters))
-         (response (execute-request request-spec))
-         (processed-response (process-response response)))
-    (format t "~A" processed-response)))
+  (call-get-api endpoint :actor-param t
+                ;:other-params '(("limit" . 50) ("cursor" . ""))
+                ))
 
 
 (defun create-record ()
