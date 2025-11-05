@@ -1,7 +1,7 @@
 (defvar version (string "{\"version\": \"v0.0.05\"}"))
 (defvar error-message (string "{\"error\": \"example\"}"))
 
-(defvar service "https://bsky.social")
+(defvar service luna.config:*service-url*)
 
 (defvar endpoint nil)
 (defvar lexicon nil)
@@ -19,5 +19,5 @@
     (:get-follows     . "app.bsky.graph.getFollows")
     (:get-followers   . "app.bsky.graph.getFollowers")))
 
-(defvar did-json (string "atproto/client/did.json"))
-(defvar identifier-json (string "atproto/client/identifier.json"))
+(defvar did-json luna.config:*did-json-path*)
+(defvar identifier-json luna.config:*identifier-json-path*)

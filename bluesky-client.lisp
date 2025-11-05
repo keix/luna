@@ -2,11 +2,12 @@
 ; https://docs.bsky.app/
 ; --------------------------------------------------------------------------------------
 (load "~/quicklisp/setup.lisp")
+(load "config.lisp")
 (load "settings.lisp")
 
 (let
   ((*standard-output*
-     (open "/dev/null" :direction :output :if-exists :append)))
+     (open luna.config:*null-device* :direction :output :if-exists :append)))
   (ql:quickload 'drakma)
   (ql:quickload 'cl-json)
   (ql:quickload 'local-time))
@@ -35,7 +36,7 @@
 
 (defun get-lexicon (lexicon)
   (loading-config-file
-    (format nil "atproto/lexicons/~A.json" (substitute #\/ #\. lexicon))))
+    (format nil "~A~A.json" luna.config:*lexicon-dir* (substitute #\/ #\. lexicon))))
 
 
 (defun get-authorization-access-jwk ()
@@ -163,6 +164,8 @@
                     unless (eq key :endpoint)
                     collect key and collect value)))
     (apply #'drakma:http-request endpoint args)))
+
+
 (defun create-session (endpoint-url &rest args)
   (declare (ignore args))
   (let* ((identifier-content (read-file-into-string identifier-json))
@@ -213,11 +216,11 @@
 
 
 (defun create-record (endpoint-url &rest args)
-  (let* ((text (or (first args) "Hello from Bluesky!"))
+  (let* ((text (or (first args) luna.config:*default-post-text*))
          (headers (get-authorization-access-jwk))
          (content (cl-json:encode-json-to-string
                     `(("repo" . ,(get-did))
-                      ("collection" . "app.bsky.feed.post")
+                      ("collection" . ,luna.config:*post-collection*)
                       ;("rkey" . "")
                       ;("validate" . nil)
                       ;("swapCommit" . "")
