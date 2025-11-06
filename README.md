@@ -1,6 +1,6 @@
-# Bluesky client written in Common Lisp
+# Luna - Bluesky client written in Common Lisp
 
-This is [Bluesky](https://bsky.app/) client written in Common Lisp and it returns JSON always.
+Luna is a [Bluesky](https://bsky.app/) client written in Common Lisp, offering both interactive REPL and command-line interfaces.
 
 ## Get started
 
@@ -12,6 +12,26 @@ git clone git@github.com:keix/luna.git
 ```
 
 ## Usage
+
+### Interactive Mode
+
+Experience Luna through its conversational interface:
+
+```
+./luna.lisp
+```
+
+Commands flow naturally: `profile`, `timeline`, `post`, `follows`, `followers`, `login`, `help`, `exit`.
+The REPL welcomes you with formatted, human-readable responses instead of raw JSON.
+
+### Command-line Mode
+
+For those who prefer directness:
+
+```
+./luna.lisp get-profile
+./luna.lisp create-record "Your thoughts here"
+```
 
 ### Create active session
 
@@ -26,7 +46,7 @@ Once your `identifier.json` is properly set up, you can initiate a session by ex
 This command will store the response into the `atproto/client/did.json` file.
 
 ```
-sbcl --script bluesky-client.lisp create-session
+./luna.lisp create-session
 ```
 
 For more information on AT Protocol's identity, visit: [AT Protocol's Identity Guide.](https://atproto.com/guides/identity)
@@ -35,7 +55,7 @@ For more information on AT Protocol's identity, visit: [AT Protocol's Identity G
 
 Below are the available commands if you have an active session. 
 
-Please be aware that the current implementation of these commands is part of an ongoing development process. As such, the feature set is not yet complete and may undergo significant changes to enhance functionality and user experience.
+Luna speaks both interactively and directly, adapting its voice to your preferred mode of conversation.
 
 | command | description |
 |---|---|

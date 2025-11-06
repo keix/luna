@@ -10,7 +10,8 @@
      (open luna.config:*null-device* :direction :output :if-exists :append)))
   (ql:quickload 'drakma)
   (ql:quickload 'cl-json)
-  (ql:quickload 'local-time))
+  (ql:quickload 'local-time)
+  (ql:quickload 'babel))
 
 
 ; --------------------------------------------------------------------- Basic functions.
@@ -85,7 +86,7 @@
          (endpoint-url (get-endpoint command))
          (options (cdr args)))
     (if (null endpoint-url)
-        (get-help)
+        (format t "Unknown command: ~A~%Use --help for available commands.~%" command)
         (apply (intern (string-upcase command)) endpoint-url options))))
 
 
@@ -154,7 +155,9 @@
 
 ; Pure functions for processing responses
 (defun process-response (response)
-  (map 'string #'code-char response))
+  (if (stringp response)
+      response
+      (babel:octets-to-string response :encoding :utf-8)))
 
 
 ; Function to execute HTTP request (side effect isolated here)
@@ -163,7 +166,11 @@
         (args (loop for (key value) on request-spec by #'cddr
                     unless (eq key :endpoint)
                     collect key and collect value)))
-    (apply #'drakma:http-request endpoint args)))
+    (apply #'drakma:http-request endpoint 
+           :external-format-out :utf-8
+           :external-format-in :utf-8
+           :want-stream nil
+           args)))
 
 
 (defun create-session (endpoint-url &rest args)
@@ -233,5 +240,7 @@
     (format t "~A" processed-response)))
 
 
-(if (eq (cdr *posix-argv*) '()) (get-help)
-  (funcall #'invoke-command-safely (cdr *posix-argv*)))
+(unless (boundp '*luna-repl-mode*)
+  (if (eq (cdr *posix-argv*) '()) 
+      (format t "Use --help for usage information.~%")
+      (funcall #'invoke-command-safely (cdr *posix-argv*))))
